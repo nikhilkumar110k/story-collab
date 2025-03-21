@@ -8,6 +8,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	db "main/db/sqlc"
+	"main/utils"
 )
 
 func main() {
@@ -25,6 +26,7 @@ func main() {
 		ctx.Set("queries", queries)
 		ctx.Next()
 	})
+	utils.RegisterRoutes(router)
 
 	log.Fatal(router.Run(":8080"))
 }

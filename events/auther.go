@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func getAuthors(ctx *gin.Context) {
+func GetAuthors(ctx *gin.Context) {
 
 	queries, exists := ctx.MustGet("queries").(*db.Queries)
 	if !exists {

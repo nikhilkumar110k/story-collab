@@ -1,11 +1,12 @@
 package utils
 
 import (
+	"main/events"
+
 	"github.com/gin-gonic/gin"
 )
 
 func RegisterRoutes(server *gin.Engine) {
 	authenticated := server.Group("/")
-	authenticated.Use()
-	authenticated.POST("/events")
+	authenticated.GET("/events", events.GetAuthors)
 }
