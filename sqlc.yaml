@@ -8,3 +8,12 @@ sql:
         package: "db"
         out: "db/sqlc"
         sql_package: "pgx/v5"
+        
+  - engine: "postgresql"
+    queries: "db/querystories/story.sql"
+    schema: "db/schemastories/schemastories.sql"
+    gen:
+      go:
+        package: "db"
+        out: "db/sqlcstory"
+        sql_package: "pgx/v5"
