@@ -17,16 +17,20 @@ type DBTX interface {
 	QueryRow(context.Context, string, ...interface{}) pgx.Row
 }
 
-func New(db DBTX) *Queries {
-	return &Queries{db: db}
+func New(db DBTX) *Queries1 {
+	return &Queries1{db: db}
 }
 
-type Queries struct {
+type Queries1 struct {
 	db DBTX
 }
 
-func (q *Queries) WithTx(tx pgx.Tx) *Queries {
-	return &Queries{
+func (q *Queries1) Close() {
+	panic("unimplemented")
+}
+
+func (q *Queries1) WithTx(tx pgx.Tx) *Queries1 {
+	return &Queries1{
 		db: tx,
 	}
 }

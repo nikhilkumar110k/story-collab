@@ -7,8 +7,6 @@ package storydb
 
 import (
 	"context"
-
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createStory = `-- name: CreateStory :one
@@ -22,12 +20,12 @@ RETURNING story_id, originalstory, pulledrequests, updatedstory, author_id
 
 type CreateStoryParams struct {
 	Originalstory  string
-	Pulledrequests pgtype.Int4
+	Pulledrequests int
 	Updatedstory   string
-	AuthorID       pgtype.Int4
+	AuthorID       int
 }
 
-func (q *Queries) CreateStory(ctx context.Context, arg CreateStoryParams) (Story, error) {
+func (q *Queries1) CreateStory(ctx context.Context, arg CreateStoryParams) (Story, error) {
 	row := q.db.QueryRow(ctx, createStory,
 		arg.Originalstory,
 		arg.Pulledrequests,
@@ -50,7 +48,7 @@ DELETE FROM stories
 WHERE story_id = $1
 `
 
-func (q *Queries) DeleteStory(ctx context.Context, storyID int32) error {
+func (q *Queries1) DeleteStory(ctx context.Context, storyID int32) error {
 	_, err := q.db.Exec(ctx, deleteStory, storyID)
 	return err
 }
@@ -60,7 +58,7 @@ SELECT story_id, originalstory, pulledrequests, updatedstory, author_id FROM sto
 WHERE story_id = $1 LIMIT 1
 `
 
-func (q *Queries) GetStory(ctx context.Context, storyID int32) (Story, error) {
+func (q *Queries1) GetStory(ctx context.Context, storyID int32) (Story, error) {
 	row := q.db.QueryRow(ctx, getStory, storyID)
 	var i Story
 	err := row.Scan(
@@ -78,7 +76,7 @@ SELECT story_id, originalstory, pulledrequests, updatedstory, author_id FROM sto
 ORDER BY story_id
 `
 
-func (q *Queries) ListStories(ctx context.Context) ([]Story, error) {
+func (q *Queries1) ListStories(ctx context.Context) ([]Story, error) {
 	rows, err := q.db.Query(ctx, listStories)
 	if err != nil {
 		return nil, err
@@ -116,12 +114,12 @@ WHERE story_id = $1
 type UpdateStoryParams struct {
 	StoryID        int32
 	Originalstory  string
-	Pulledrequests pgtype.Int4
+	Pulledrequests int
 	Updatedstory   string
-	AuthorID       pgtype.Int4
+	AuthorID       int 
 }
 
-func (q *Queries) UpdateStory(ctx context.Context, arg UpdateStoryParams) error {
+func (q *Queries1) UpdateStory(ctx context.Context, arg UpdateStoryParams) error {
 	_, err := q.db.Exec(ctx, updateStory,
 		arg.StoryID,
 		arg.Originalstory,
