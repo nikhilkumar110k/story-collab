@@ -10,10 +10,10 @@ sql:
         sql_package: "pgx/v5"
         
   - engine: "postgresql"
-    queries: "db/querystories/story.sql"
-    schema: "db/schemastories/schemastories.sql"
+    queries: "storydb/querystories/story.sql"
+    schema: "storydb/schemastories/schemastories.sql"
     gen:
       go:
-        package: "db"
-        out: "db/sqlcstory"
+        package: "storydb"
+        out: "storydb/sqlcstory"
         sql_package: "pgx/v5"
