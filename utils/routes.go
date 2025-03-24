@@ -8,5 +8,6 @@ import (
 
 func RegisterRoutes(server *gin.Engine) {
 	authenticated := server.Group("/")
-	authenticated.GET("/events", events.GetAuthors)
+	authenticated.GET("/GetAuthors", events.GetAuthors)
+	authenticated.POST("/createauthor", events.CreateAuthors)
 }
