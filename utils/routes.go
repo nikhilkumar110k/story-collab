@@ -17,8 +17,8 @@ func RegisterRoutes(server *gin.Engine) {
 	authenticated.POST("/createauthor", events.CreateAuthors)
 	authenticated.POST("/deleteauthor", events.DeleteAuthors)
 	authenticated.POST("/createstories", events.CreateStory)
-	authenticated.POST("/signup", Signup)
-	authenticated.POST("/login", Login)
+	server.POST("/signup", Signup)
+	server.POST("/login", Login)
 }
 
 const Secretkey = "totallsecretkeylol"

@@ -22,7 +22,7 @@ RETURNING id, name, bio
 
 type CreateAuthorParams struct {
 	Name string
-	Bio  pgtype.Text
+	Bio  string
 }
 
 func (q *Queries) CreateAuthor(ctx context.Context, arg CreateAuthorParams) (Author, error) {

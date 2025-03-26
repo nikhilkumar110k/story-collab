@@ -51,7 +51,7 @@ func CreateAuthors(ctx *gin.Context) {
 
 	authorParams := db.CreateAuthorParams{
 		Name: req.Name,
-		Bio:  pgtype.Text{String: req.Bio, Valid: true},
+		Bio:  pgtype.Text{String: req.Bio, Valid: true}.String,
 	}
 
 	createdAuthor, err := queries.CreateAuthor(ctx, authorParams)
