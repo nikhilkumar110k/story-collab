@@ -1,7 +1,4 @@
--- name: GetAuthor :one
-SELECT id, name, bio, email, password FROM authors
-WHERE id = $1 LIMIT 1;
-
+-- Step 1: Create Table First
 CREATE TABLE IF NOT EXISTS authors (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
@@ -9,6 +6,20 @@ CREATE TABLE IF NOT EXISTS authors (
     email TEXT UNIQUE NOT NULL,
     password TEXT NOT NULL
 );
+
+-- Step 2: Ensure Table Exists Before Running Queries
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'authors') THEN
+        RAISE EXCEPTION 'Table "authors" does not exist yet.';
+    END IF;
+END $$;
+
+-- Step 3: Queries After Table Exists
+
+-- name: GetAuthor :one
+SELECT id, name, bio, email, password FROM authors
+WHERE id = $1 LIMIT 1;
 
 -- name: ListAuthors :many
 SELECT id, name, bio, email, password FROM authors
@@ -39,9 +50,9 @@ WHERE id = $1;
 DELETE FROM authors
 WHERE id = $1;
 
--- Ensure required columns exist
+-- Step 4: Ensure Required Columns Exist
 SELECT column_name FROM information_schema.columns WHERE table_name = 'authors';
 
--- Add missing columns if necessary
+-- Step 5: Add Missing Columns if Necessary
 ALTER TABLE authors ADD COLUMN IF NOT EXISTS email TEXT UNIQUE NOT NULL;
 ALTER TABLE authors ADD COLUMN IF NOT EXISTS password TEXT NOT NULL;
