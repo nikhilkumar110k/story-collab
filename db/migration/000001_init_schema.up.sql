@@ -2,6 +2,14 @@
 SELECT id, name, bio, email, password FROM authors
 WHERE id = $1 LIMIT 1;
 
+CREATE TABLE IF NOT EXISTS authors (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    bio TEXT,
+    email TEXT UNIQUE NOT NULL,
+    password TEXT NOT NULL
+);
+
 -- name: ListAuthors :many
 SELECT id, name, bio, email, password FROM authors
 ORDER BY name;
