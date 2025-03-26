@@ -1,19 +1,20 @@
 makeup:
-	docker exec -it project3postgresql1 psql -U root
-
+	docker exec -it project3postgresql1 psql -U root -d project12
 
 migrateup:
-	migrate -path "D:/project3 BACKEND" -database "postgresql://root:Nikhil@123k@localhost:5432/project3?sslmode=disable" -verbose up
+	migrate -path "D:/project3 BACKEND" -database "postgresql://root:Nikhil@123k@localhost:5432/project3postgresql1?sslmode=disable" -verbose up
 
 migratedown:
-	migrate -path "D:/project3 BACKEND" -database "postgresql://root:Nikhil@123k@localhost:5432/project3?sslmode=disable" -verbose down
+	migrate -path "D:/project3 BACKEND" -database "postgresql://root:Nikhil@123k@localhost:5432/project3postgresql1?sslmode=disable" -verbose down
 
 postgres:
-	docker run --name project3postgresql1 -p 5432:5432 \
+	docker run --name project3 -p 5432:5432 \
 	-e POSTGRES_USER=root \
 	-e POSTGRES_PASSWORD=Nikhil@123k \
+	-e POSTGRES_DB=project3postgresql1 \
 	-d postgres:17-alpine
-createdb:
-	psql -U root -d project3 -f db/migration/001_create_authors.sql
 
-.PHONY: makeup postgres createdb
+createdb:
+	psql -U root -d project3postgresql1 -f db/migration/001_create_authors.sql
+
+.PHONY: makeup migrateup migratedown postgres createdb
