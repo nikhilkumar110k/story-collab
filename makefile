@@ -2,7 +2,8 @@ makeup:
 	docker exec -it project3 psql -U root -d project12
 
 migrateup:
-	migrate -path ./db/migration -database "postgresql://root:Nikhil@123k@localhost:5432/project3postgresql1?sslmode=disable" -verbose up
+	/usr/local/bin/migrate -path ./db/migration -database "postgresql://root:Nikhil@123k@localhost:5432/project3postgresql1?sslmode=disable" -verbose up
+
 
 migratedown:
 	migrate -path "D:/project3 BACKEND" -database "postgresql://root:Nikhil@123k@localhost:5432/project3postgresql1?sslmode=disable" -verbose down
