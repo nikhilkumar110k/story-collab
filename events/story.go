@@ -14,7 +14,7 @@ func CreateStory(ctx *gin.Context) {
 		return
 	}
 
-	query, ok := queryinterface.(*storydb.Queries1)
+	query, ok := queryinterface.(*storydb.Queries)
 	if !ok {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"message": "query not found"})
 		return

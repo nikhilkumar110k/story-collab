@@ -8,7 +8,7 @@ import (
 )
 
 type Story struct {
-	StoryID        int
+	StoryID        int32
 	Originalstory  string
 	Pulledrequests int
 	Updatedstory   string

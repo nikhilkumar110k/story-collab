@@ -6,6 +6,11 @@ WHERE id = $1 LIMIT 1;
 SELECT * FROM authors
 ORDER BY name;
 
+-- name: GetAuthorsByEmail :one
+SELECT id, password FROM authors
+WHERE email = $1
+LIMIT 1;
+
 -- name: CreateAuthor :one
 INSERT INTO authors (
   name, bio

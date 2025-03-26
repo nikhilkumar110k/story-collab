@@ -9,7 +9,9 @@ import (
 )
 
 type Author struct {
-	ID   int64
-	Name string
-	Bio  pgtype.Text
+	ID       int64
+	Name     string
+	Bio      pgtype.Text
+	Email    pgtype.Text
+	Password pgtype.Text
 }

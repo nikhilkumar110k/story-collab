@@ -17,18 +17,24 @@ INSERT INTO authors (
 ) VALUES (
   $1, $2
 )
-RETURNING id, name, bio
+RETURNING id, name, bio, email, password
 `
 
 type CreateAuthorParams struct {
 	Name string
-	Bio  string
+	Bio  pgtype.Text
 }
 
 func (q *Queries) CreateAuthor(ctx context.Context, arg CreateAuthorParams) (Author, error) {
 	row := q.db.QueryRow(ctx, createAuthor, arg.Name, arg.Bio)
 	var i Author
-	err := row.Scan(&i.ID, &i.Name, &i.Bio)
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Bio,
+		&i.Email,
+		&i.Password,
+	)
 	return i, err
 }
 
@@ -43,19 +49,43 @@ func (q *Queries) DeleteAuthor(ctx context.Context, id int64) error {
 }
 
 const getAuthor = `-- name: GetAuthor :one
-SELECT id, name, bio FROM authors
+SELECT id, name, bio, email, password FROM authors
 WHERE id = $1 LIMIT 1
 `
 
 func (q *Queries) GetAuthor(ctx context.Context, id int64) (Author, error) {
 	row := q.db.QueryRow(ctx, getAuthor, id)
 	var i Author
-	err := row.Scan(&i.ID, &i.Name, &i.Bio)
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Bio,
+		&i.Email,
+		&i.Password,
+	)
+	return i, err
+}
+
+const getAuthorsByEmail = `-- name: GetAuthorsByEmail :one
+SELECT id, password FROM authors
+WHERE email = $1
+LIMIT 1
+`
+
+type GetAuthorsByEmailRow struct {
+	ID       int64
+	Password string
+}
+
+func (q *Queries) GetAuthorsByEmail(ctx context.Context, email string) (GetAuthorsByEmailRow, error) {
+	row := q.db.QueryRow(ctx, getAuthorsByEmail, email)
+	var i GetAuthorsByEmailRow
+	err := row.Scan(&i.ID, &i.Password)
 	return i, err
 }
 
 const listAuthors = `-- name: ListAuthors :many
-SELECT id, name, bio FROM authors
+SELECT id, name, bio, email, password FROM authors
 ORDER BY name
 `
 
@@ -68,7 +98,13 @@ func (q *Queries) ListAuthors(ctx context.Context) ([]Author, error) {
 	var items []Author
 	for rows.Next() {
 		var i Author
-		if err := rows.Scan(&i.ID, &i.Name, &i.Bio); err != nil {
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Bio,
+			&i.Email,
+			&i.Password,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
