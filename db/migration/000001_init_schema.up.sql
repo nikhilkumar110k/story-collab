@@ -1,5 +1,3 @@
-CREATE DATABASE project3;
-
 -- name: GetAuthor :one
 SELECT id, name, bio, email, password FROM authors
 WHERE id = $1 LIMIT 1;
