@@ -48,7 +48,7 @@ func (u *User) Validate(ctx *gin.Context) error {
 		return err
 	}
 
-	passValid := Checkpass(u.Password, user.Password)
+	passValid := Checkpass(u.Password, u.Password)
 	if !passValid {
 		return errors.New("incorrect password")
 	}
@@ -60,28 +60,24 @@ func (u *User) Validate(ctx *gin.Context) error {
 func Signup(ctx *gin.Context) {
 	var user User
 
-	// ✅ Parse request body
 	err := ctx.ShouldBindJSON(&user)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": "invalid input", "error": err.Error()})
 		return
 	}
 
-	// ✅ Hash the password before saving it
 	hashedPassword, err := HashPassword(user.Password)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"message": "error hashing password", "error": err.Error()})
 		return
 	}
 
-	// ✅ Get database connection
 	queries, exists := ctx.MustGet("queries").(*db.Queries)
 	if !exists {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Database connection not found"})
 		return
 	}
 
-	// ✅ Insert user into the database
 	insertedUser, err := queries.CreateAuthor(context.Background(), db.CreateAuthorParams{
 		Name: user.Name,
 		Bio:  hashedPassword,
@@ -91,7 +87,6 @@ func Signup(ctx *gin.Context) {
 		return
 	}
 
-	// ✅ Respond with success
 	ctx.JSON(http.StatusCreated, gin.H{
 		"message": "signed up successfully",
 		"user_id": insertedUser.ID,
@@ -101,13 +96,11 @@ func Signup(ctx *gin.Context) {
 func Login(ctx *gin.Context) {
 	var user User
 
-	// ✅ Decode JSON request body
 	if err := ctx.ShouldBindJSON(&user); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid input", "message": err.Error()})
 		return
 	}
 
-	// ✅ Validate user
 	if err := user.Validate(ctx); err != nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return

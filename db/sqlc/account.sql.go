@@ -81,7 +81,7 @@ LIMIT 1
 
 type GetAuthorsByEmailRow struct {
 	ID       int64
-	Password string
+	Password pgtype.Text
 }
 
 func (q *Queries) GetAuthorsByEmail(ctx context.Context, email string) (GetAuthorsByEmailRow, error) {
@@ -124,18 +124,28 @@ func (q *Queries) ListAuthors(ctx context.Context) ([]Author, error) {
 
 const updateAuthor = `-- name: UpdateAuthor :exec
 UPDATE authors
-  set name = $2,
-  bio = $3
+SET name = $2,
+    bio = $3,
+    email = $4,
+    password = $5
 WHERE id = $1
 `
 
 type UpdateAuthorParams struct {
-	ID   int64
-	Name string
-	Bio  pgtype.Text
+	ID       int64
+	Name     string
+	Bio      pgtype.Text
+	Email    pgtype.Text
+	Password pgtype.Text
 }
 
 func (q *Queries) UpdateAuthor(ctx context.Context, arg UpdateAuthorParams) error {
-	_, err := q.db.Exec(ctx, updateAuthor, arg.ID, arg.Name, arg.Bio)
+	_, err := q.db.Exec(ctx, updateAuthor,
+		arg.ID,
+		arg.Name,
+		arg.Bio,
+		arg.Email,
+		arg.Password,
+	)
 	return err
 }
