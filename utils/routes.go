@@ -16,11 +16,11 @@ import (
 func RegisterRoutes(server *gin.Engine) {
 	authenticated := server.Group("/")
 	authenticated.Use(Authenticate)
-	authenticated.GET("/GetAuthors", events.GetAuthors)
-	authenticated.POST("/createauthor", events.CreateAuthors)
-	authenticated.POST("/deleteauthor", events.DeleteAuthors)
-	authenticated.POST("/createstories", events.CreateStory)
-	server.POST("/signup", Signup)
+	server.GET("/GetAuthors", events.GetAuthors)
+	server.POST("/createauthor", events.CreateAuthors)
+	server.POST("/deleteauthor", events.DeleteAuthors)
+	server.POST("/createstories", events.CreateStory)
+	server.POST("/signup", SignUp)
 	server.POST("/login", Login)
 }
 
@@ -48,49 +48,37 @@ func (u *User) Validate(ctx *gin.Context) error {
 		return err
 	}
 
-	passValid := Checkpass(u.Password, u.Password)
-	if !passValid {
-		return errors.New("incorrect password")
-	}
-
 	u.ID = user.ID
 	return nil
 }
 
-func Signup(ctx *gin.Context) {
-	var user User
+func SignUp(ctx *gin.Context) {
+	queries := ctx.MustGet("queries").(*db.Queries)
 
-	err := ctx.ShouldBindJSON(&user)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"message": "invalid input", "error": err.Error()})
+	var req struct {
+		Name     string `json:"name"`
+		Bio      string `json:"bio"`
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 		return
 	}
 
-	hashedPassword, err := HashPassword(user.Password)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"message": "error hashing password", "error": err.Error()})
-		return
-	}
-
-	queries, exists := ctx.MustGet("queries").(*db.Queries)
-	if !exists {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Database connection not found"})
-		return
-	}
-
-	insertedUser, err := queries.CreateAuthor(context.Background(), db.CreateAuthorParams{
-		Name: user.Name,
-		Bio:  hashedPassword,
+	author, err := queries.CreateAuthor(ctx, db.CreateAuthorParams{
+		Name:     req.Name,
+		Bio:      req.Bio,
+		Email:    req.Email,
+		Password: req.Password, // Store hashed password, not plaintext
 	})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"message": "error saving user", "error": err.Error()})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create author"})
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, gin.H{
-		"message": "signed up successfully",
-		"user_id": insertedUser.ID,
-	})
+	ctx.JSON(http.StatusOK, author)
 }
 
 func Login(ctx *gin.Context) {
