@@ -24,7 +24,7 @@ func RegisterRoutes(server *gin.Engine) {
 	server.POST("/login", Login)
 }
 
-const Secretkey = "totallsecretkeylol"
+const Secretkey = "totallsecretkeylol1"
 
 type User struct {
 	ID       int64  `json:"id" binding:"-"`
