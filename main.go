@@ -13,7 +13,7 @@ import (
 )
 
 func main() {
-	mainDBURL := "postgresql://root:Nikhil@123k@localhost:5432/project3?sslmode=disable"
+	mainDBURL := "postgresql://root:Nikhil@123k@localhost:5432/project3postgresql1?sslmode=disable"
 	mainConn, err := pgxpool.New(context.Background(), mainDBURL)
 	if err != nil {
 		log.Fatal("Cannot connect to main database:", err)
