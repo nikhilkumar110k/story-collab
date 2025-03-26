@@ -40,18 +40,22 @@ func (u *User) Validate(ctx *gin.Context) error {
 		return errors.New("database connection not found")
 	}
 
+	// Fetch user details using the correct method
 	user, err := queries.GetAuthorsByEmail(context.Background(), u.Email)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return errors.New("email not found")
 		}
 		return err
 	}
 
+	// Check password using utils
 	passValid := Checkpass(u.Password, user.Password)
 	if !passValid {
 		return errors.New("incorrect password")
 	}
+
+	// Assign user ID after validation
 	u.ID = user.ID
 	return nil
 }
