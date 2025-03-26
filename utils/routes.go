@@ -40,7 +40,6 @@ func (u *User) Validate(ctx *gin.Context) error {
 		return errors.New("database connection not found")
 	}
 
-	// Fetch user details using sqlc-generated method
 	user, err := queries.GetAuthorsByEmail(context.Background(), u.Email)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -49,13 +48,10 @@ func (u *User) Validate(ctx *gin.Context) error {
 		return err
 	}
 
-	// Check password
 	passValid := Checkpass(u.Password, user.Password)
 	if !passValid {
 		return errors.New("incorrect password")
 	}
-
-	// Assign user ID after validation
 	u.ID = user.ID
 	return nil
 }
@@ -83,8 +79,6 @@ func Login(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 		return
 	}
-
-	// Pass ctx to Va
 
 	err := ctx.ShouldBindJSON(&user)
 	if err != nil {
