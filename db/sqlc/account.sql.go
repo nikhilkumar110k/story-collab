@@ -84,7 +84,7 @@ type GetAuthorsByEmailRow struct {
 	Password string
 }
 
-func (q *Queries) GetAuthorsByEmail(ctx context.Context, email pgtype.Text) (GetAuthorsByEmailRow, error) {
+func (q *Queries) GetAuthorsByEmail(ctx context.Context, email string) (GetAuthorsByEmailRow, error) {
 	row := q.db.QueryRow(ctx, getAuthorsByEmail, email)
 	var i GetAuthorsByEmailRow
 	err := row.Scan(&i.ID, &i.Password)

@@ -22,9 +22,9 @@ RETURNING story_id, originalstory, pulledrequests, updatedstory, author_id
 
 type CreateStoryParams struct {
 	Originalstory  string
-	Pulledrequests pgtype.Int4
+	Pulledrequests int
 	Updatedstory   string
-	AuthorID       pgtype.Int4
+	AuthorID       int
 }
 
 func (q *Queries) CreateStory(ctx context.Context, arg CreateStoryParams) (Story, error) {
