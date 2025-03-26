@@ -13,11 +13,11 @@ LIMIT 1;
 
 -- name: CreateAuthor :one
 INSERT INTO authors (
-  name, bio
+  name, bio, email, password
 ) VALUES (
-  $1, $2
+  $1, $2, $3, $4
 )
-RETURNING *;
+RETURNING id, name, bio, email, password;
 
 -- name: UpdateAuthor :exec
 UPDATE authors

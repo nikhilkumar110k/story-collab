@@ -40,7 +40,6 @@ func (u *User) Validate(ctx *gin.Context) error {
 		return errors.New("database connection not found")
 	}
 
-	// Fetch user details using the correct method
 	user, err := queries.GetAuthorsByEmail(context.Background(), u.Email)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -49,64 +48,72 @@ func (u *User) Validate(ctx *gin.Context) error {
 		return err
 	}
 
-	// Check password using utils
 	passValid := Checkpass(u.Password, user.Password)
 	if !passValid {
 		return errors.New("incorrect password")
 	}
 
-	// Assign user ID after validation
 	u.ID = user.ID
 	return nil
 }
 
-func Signup(context *gin.Context) {
-	var user User
-	err := context.ShouldBindJSON(&user)
-	if err != nil {
-		context.JSON(http.StatusBadRequest, gin.H{"message": "invalid input", "error": err.Error()})
-		return
-	}
-
-	if err != nil {
-		context.JSON(http.StatusInternalServerError, gin.H{"message": "error saving the credentials", "error": err.Error()})
-		return
-	}
-
-	context.JSON(http.StatusCreated, gin.H{"message": "signed up successfully", "user_id": user.ID})
-}
-
-func Login(ctx *gin.Context) {
+func Signup(ctx *gin.Context) {
 	var user User
 
-	if err := ctx.ShouldBindJSON(&user); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
-		return
-	}
-
+	// ✅ Parse request body
 	err := ctx.ShouldBindJSON(&user)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": "invalid input", "error": err.Error()})
 		return
 	}
 
-	err = user.Validate(ctx)
+	// ✅ Hash the password before saving it
+	hashedPassword, err := HashPassword(user.Password)
 	if err != nil {
-		if err.Error() == "email not found" || err.Error() == "incorrect password" {
-			ctx.JSON(http.StatusUnauthorized, gin.H{"message": "credentials didn't meet"})
-		} else {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"message": "internal server error", "error": err.Error()})
-		}
+		ctx.JSON(http.StatusInternalServerError, gin.H{"message": "error hashing password", "error": err.Error()})
 		return
 	}
-	token, err := Generatetoken(user.Email, user.ID)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"mesaage": "error generating token"})
-		return
-	}
-	ctx.JSON(http.StatusAccepted, gin.H{"message": "succesfully got the token", "token": token})
 
-	ctx.JSON(http.StatusAccepted, gin.H{"message": "login successful"})
+	// ✅ Get database connection
+	queries, exists := ctx.MustGet("queries").(*db.Queries)
+	if !exists {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Database connection not found"})
+		return
+	}
+
+	// ✅ Insert user into the database
+	insertedUser, err := queries.CreateAuthor(context.Background(), db.CreateAuthorParams{
+		Name: user.Name,
+		Bio:  hashedPassword,
+	})
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"message": "error saving user", "error": err.Error()})
+		return
+	}
+
+	// ✅ Respond with success
+	ctx.JSON(http.StatusCreated, gin.H{
+		"message": "signed up successfully",
+		"user_id": insertedUser.ID,
+	})
+}
+
+func Login(ctx *gin.Context) {
+	var user User
+
+	// ✅ Decode JSON request body
+	if err := ctx.ShouldBindJSON(&user); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid input", "message": err.Error()})
+		return
+	}
+
+	// ✅ Validate user
+	if err := user.Validate(ctx); err != nil {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"message": "Login successful"})
 }
 
 func Generatetoken(email string, userid int64) (string, error) {

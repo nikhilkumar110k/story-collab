@@ -5,12 +5,13 @@
 package storydb
 
 import (
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Story struct {
 	StoryID        int32
 	Originalstory  string
-	Pulledrequests int
+	Pulledrequests pgtype.Int4
 	Updatedstory   string
-	AuthorID       int
+	AuthorID       pgtype.Int4
 }

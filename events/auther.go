@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 func GetAuthors(ctx *gin.Context) {
@@ -51,7 +50,7 @@ func CreateAuthors(ctx *gin.Context) {
 
 	authorParams := db.CreateAuthorParams{
 		Name: req.Name,
-		Bio:  pgtype.Text{String: req.Bio, Valid: true},
+		Bio:  req.Bio,
 	}
 
 	createdAuthor, err := queries.CreateAuthor(ctx, authorParams)

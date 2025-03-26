@@ -13,20 +13,27 @@ import (
 
 const createAuthor = `-- name: CreateAuthor :one
 INSERT INTO authors (
-  name, bio
+  name, bio, email, password
 ) VALUES (
-  $1, $2
+  $1, $2, $3, $4
 )
 RETURNING id, name, bio, email, password
 `
 
 type CreateAuthorParams struct {
-	Name string
-	Bio  pgtype.Text
+	Name     string
+	Bio      string
+	Email    string
+	Password string
 }
 
 func (q *Queries) CreateAuthor(ctx context.Context, arg CreateAuthorParams) (Author, error) {
-	row := q.db.QueryRow(ctx, createAuthor, arg.Name, arg.Bio)
+	row := q.db.QueryRow(ctx, createAuthor,
+		arg.Name,
+		arg.Bio,
+		arg.Email,
+		arg.Password,
+	)
 	var i Author
 	err := row.Scan(
 		&i.ID,
@@ -77,7 +84,7 @@ type GetAuthorsByEmailRow struct {
 	Password string
 }
 
-func (q *Queries) GetAuthorsByEmail(ctx context.Context, email string) (GetAuthorsByEmailRow, error) {
+func (q *Queries) GetAuthorsByEmail(ctx context.Context, email pgtype.Text) (GetAuthorsByEmailRow, error) {
 	row := q.db.QueryRow(ctx, getAuthorsByEmail, email)
 	var i GetAuthorsByEmailRow
 	err := row.Scan(&i.ID, &i.Password)

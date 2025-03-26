@@ -25,10 +25,6 @@ type Queries struct {
 	db DBTX
 }
 
-func (q *Queries) Close() {
-	panic("unimplemented")
-}
-
 func (q *Queries) WithTx(tx pgx.Tx) *Queries {
 	return &Queries{
 		db: tx,
