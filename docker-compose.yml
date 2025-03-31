@@ -16,7 +16,7 @@ services:
 
   api:
     build: .
-    container_name: project3_api
+    container_name: project3
     restart: always
     depends_on:
       - db
