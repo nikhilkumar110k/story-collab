@@ -1,8 +1,6 @@
-version: '3.8'
-
 services:
   db:
-    image: postgres:17-alpine
+    image: postgres
     container_name: project3
     restart: always
     environment:
