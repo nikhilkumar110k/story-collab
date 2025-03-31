@@ -21,7 +21,7 @@ func main() {
 	defer mainConn.Close()
 	mainQueries := db.New(mainConn)
 
-	storiesDBURL := "postgresql://root:Nikhil@123k@localhost:5432/storiesdb?sslmode=disable"
+	storiesDBURL := "postgresql://root:Nikhil@123k@localhost:5432/project3postgresql1?sslmode=disable"
 	storiesConn, err := pgxpool.New(context.Background(), storiesDBURL)
 	if err != nil {
 		log.Fatal("Cannot connect to stories database:", err)
