@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: project3
+    restart: always
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: Nikhil@123k
+      POSTGRES_DB: project3postgresql1
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  api:
+    build: .
+    container_name: project3_api
+    restart: always
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: "postgresql://root:Nikhil@123k@db:5432/project3postgresql1?sslmode=disable"
+    ports:
+      - "8080:8080"
+
+volumes:
+  postgres_data:
