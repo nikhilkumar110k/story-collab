@@ -1,7 +1,7 @@
 services:
   db:
     image: postgres
-    container_name: project3-db
+    container_name: project3
     restart: always
     environment:
       POSTGRES_USER: root
@@ -14,7 +14,7 @@ services:
 
   api:
     build: .
-    container_name: project3
+    container_name: project3-db
     restart: always
     depends_on:
       - db
