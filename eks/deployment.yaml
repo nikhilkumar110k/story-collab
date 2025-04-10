@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: project3backend-deployment
+  labels:
+    app: project3backend-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: project3backend-api
+  template:
+    metadata:
+      labels:
+        app: project3backend-api
+    spec:
+      containers:
+      - name: project3backend-api
+        image: 992382554290.dkr.ecr.us-east-1.amazonaws.com/myapp:latest
+        ports:
+        - containerPort: 80
