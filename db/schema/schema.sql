@@ -1,64 +1,77 @@
-CREATE TYPE "story_status" AS ENUM (
+-- Drop ENUM type if exists
+DROP TYPE IF EXISTS story_status;
+
+-- Create ENUM type
+CREATE TYPE story_status AS ENUM (
   'draft',
   'published',
   'archived'
 );
 
-CREATE TABLE "users" (
-  "id" varchar PRIMARY KEY,
-  "name" varchar NOT NULL,
-  "bio" text NOT NULL,
-  "profile_image" varchar NOT NULL DEFAULT '',
-  "location" varchar NOT NULL,
-  "website" varchar NOT NULL DEFAULT '',
-  "followers" integer NOT NULL DEFAULT 0,
-  "following" integer NOT NULL DEFAULT 0,
-  "stories_count" integer NOT NULL DEFAULT 0,
-  "is_verified" boolean NOT NULL DEFAULT false
+-- Create users table
+CREATE TABLE users (
+  id INTEGER PRIMARY KEY,
+  name VARCHAR NOT NULL,
+  bio TEXT NOT NULL,
+  profile_image VARCHAR NOT NULL DEFAULT '',
+  location VARCHAR NOT NULL,
+  website VARCHAR NOT NULL DEFAULT '',
+  followers INTEGER NOT NULL DEFAULT 0,
+  following INTEGER NOT NULL DEFAULT 0,
+  email VARCHAR NOT NULL UNIQUE,
+  stories_count INTEGER NOT NULL DEFAULT 0,
+  is_verified BOOLEAN NOT NULL DEFAULT false
+);
+ALTER TABLE users ADD COLUMN password TEXT NOT NULL;
+-- Alter the users table to make 'id' auto-incrementing
+ALTER TABLE users
+    ALTER COLUMN id SET DEFAULT nextval('users_id_seq'::regclass);
+    
+-- Create stories table with user_id instead of author_id
+CREATE TABLE stories (
+  id INTEGER PRIMARY KEY,
+  title VARCHAR NOT NULL,
+  description TEXT,
+  cover_image VARCHAR,
+  user_id INTEGER NOT NULL,  -- changed from author_id to user_id
+  likes INTEGER NOT NULL DEFAULT 0,
+  views INTEGER NOT NULL DEFAULT 0,
+  published_date TIMESTAMPTZ,
+  last_edited TIMESTAMPTZ NOT NULL,
+  story_type VARCHAR NOT NULL,
+  status story_status NOT NULL,
+  genres TEXT[]
 );
 
-
-CREATE TABLE "stories" (
-  "id" varchar PRIMARY KEY,
-  "title" varchar NOT NULL,
-  "description" text,
-  "cover_image" varchar,
-  "author_id" varchar NOT NULL,
-  "likes" integer NOT NULL DEFAULT 0,
-  "views" integer NOT NULL DEFAULT 0,
-  "published_date" timestamptz,
-  "last_edited" timestamptz NOT NULL,
-  "story_type" varchar NOT NULL,
-  "status" story_status NOT NULL,
-  "genres" text[]
+-- Create chapters table
+CREATE TABLE chapters (
+  id INTEGER PRIMARY KEY,
+  story_id INTEGER NOT NULL,
+  title VARCHAR NOT NULL,
+  content TEXT NOT NULL,
+  is_complete BOOLEAN NOT NULL DEFAULT false
 );
 
-CREATE TABLE "chapters" (
-  "id" varchar PRIMARY KEY,
-  "story_id" varchar NOT NULL,
-  "title" varchar NOT NULL,
-  "content" text NOT NULL,
-  "is_complete" boolean NOT NULL DEFAULT false
+-- Create story_collaborators table
+CREATE TABLE story_collaborators (
+  story_id INTEGER NOT NULL,
+  user_id INTEGER NOT NULL,
+  PRIMARY KEY (story_id, user_id)
 );
 
-CREATE TABLE "story_collaborators" (
-  "story_id" varchar NOT NULL,
-  "user_id" varchar NOT NULL,
-  PRIMARY KEY ("story_id", "user_id")
-);
+-- Foreign key constraints
+ALTER TABLE stories
+  ADD CONSTRAINT stories_user_id_fkey
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
 
-ALTER TABLE "stories" ADD FOREIGN KEY ("author_id") REFERENCES "users" ("id");
+ALTER TABLE chapters
+  ADD CONSTRAINT chapters_story_id_fkey
+  FOREIGN KEY (story_id) REFERENCES stories(id) ON DELETE CASCADE;
 
-ALTER TABLE "chapters" ADD FOREIGN KEY ("story_id") REFERENCES "stories" ("id") ON DELETE CASCADE;
-
-ALTER TABLE "story_collaborators" ADD FOREIGN KEY ("story_id") REFERENCES "stories" ("id") ON DELETE CASCADE;
-
-ALTER TABLE "story_collaborators" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id");
--- Step 1: Drop the existing foreign key constraint
 ALTER TABLE story_collaborators
-DROP CONSTRAINT IF EXISTS story_collaborators_user_id_fkey;
+  ADD CONSTRAINT story_collaborators_story_id_fkey
+  FOREIGN KEY (story_id) REFERENCES stories(id) ON DELETE CASCADE;
 
--- Step 2: Re-add the foreign key with ON DELETE CASCADE
 ALTER TABLE story_collaborators
-ADD CONSTRAINT story_collaborators_user_id_fkey
-FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
+  ADD CONSTRAINT story_collaborators_user_id_fkey
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;

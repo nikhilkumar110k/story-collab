@@ -3,6 +3,7 @@ package events
 import (
 	"errors"
 	"net/http"
+	"strconv"
 
 	db "main/db/sqlc"
 
@@ -24,7 +25,7 @@ func getQueries(c *gin.Context) (*db.Queries, error) {
 }
 
 type UserRequest struct {
-	ID           string `json:"id" binding:"required"`
+	ID           int64  `json:"id" binding:"required"`
 	Name         string `json:"name" binding:"required"`
 	Bio          string `json:"bio"`
 	ProfileImage string `json:"profile_image" binding:"-"`
@@ -50,7 +51,6 @@ func CreateUserHandler(ctx *gin.Context) {
 	}
 
 	user, err := queries.CreateUser(ctx, db.CreateUserParams{
-		ID:           req.ID,
 		Name:         req.Name,
 		Bio:          req.Bio,
 		ProfileImage: req.ProfileImage,
@@ -86,7 +86,12 @@ func GetAllUsersHandler(ctx *gin.Context) {
 }
 
 func GetUserByIDHandler(ctx *gin.Context) {
-	id := ctx.Param("id")
+	idStr := ctx.Param("id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		return
+	}
 
 	queries, err := getQueries(ctx)
 	if err != nil {
@@ -104,7 +109,13 @@ func GetUserByIDHandler(ctx *gin.Context) {
 }
 
 func UpdateUserHandler(ctx *gin.Context) {
-	id := ctx.Param("id")
+	idStr := ctx.Param("id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		return
+	}
+
 	var req UserRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
@@ -138,7 +149,12 @@ func UpdateUserHandler(ctx *gin.Context) {
 }
 
 func DeleteUserHandler(ctx *gin.Context) {
-	id := ctx.Param("id")
+	idStr := ctx.Param("id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		return
+	}
 
 	queries, err := getQueries(ctx)
 	if err != nil {

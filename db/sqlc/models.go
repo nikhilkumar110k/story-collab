@@ -8,7 +8,7 @@ import (
 	"database/sql/driver"
 	"fmt"
 
-	"time")
+"time")
 
 type StoryStatus string
 
@@ -54,19 +54,19 @@ func (ns NullStoryStatus) Value() (driver.Value, error) {
 }
 
 type Chapter struct {
-	ID         string
-	StoryID    string
+	ID         int64
+	StoryID    int64
 	Title      string
 	Content    string
 	IsComplete bool
 }
 
 type Story struct {
-	ID            string
+	ID            int64
 	Title         string
 	Description   string
 	CoverImage    string
-	AuthorID      string
+	UserID        int64
 	Likes         int64
 	Views         int64
 	PublishedDate time.Time
@@ -77,12 +77,12 @@ type Story struct {
 }
 
 type StoryCollaborator struct {
-	StoryID string
-	UserID  string
+	StoryID int64
+	UserID  int64
 }
 
 type User struct {
-	ID           string
+	ID           int64
 	Name         string
 	Bio          string
 	ProfileImage string
@@ -90,6 +90,8 @@ type User struct {
 	Website      string
 	Followers    int64
 	Following    int64
+	Email        string
 	StoriesCount int64
 	IsVerified   bool
+	Password     string
 }

@@ -12,6 +12,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func RegisterRoutes(server *gin.Engine) {
@@ -48,7 +49,7 @@ func (u *User) Validate(ctx *gin.Context) error {
 		return errors.New("database connection not found")
 	}
 
-	user, err := queries.GetUserByID(context.Background(), u.Email)
+	user, err := queries.GetUserByEmail(context.Background(), u.Email)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return errors.New("email not found")
@@ -56,7 +57,7 @@ func (u *User) Validate(ctx *gin.Context) error {
 		return err
 	}
 
-	id, err := strconv.ParseInt(user.ID, 10, 64)
+	id, err := strconv.ParseInt(strconv.FormatInt(user.ID, 10), 10, 64)
 	if err != nil {
 		return errors.New("invalid user ID format")
 	}
@@ -68,43 +69,81 @@ func SignUp(ctx *gin.Context) {
 	queries := ctx.MustGet("queries").(*db.Queries)
 
 	var req struct {
-		Name     string `json:"name"`
-		Bio      string `json:"bio"`
-		Email    string `json:"email"`
-		Password string `json:"password"`
+		Name         string `json:"name" binding:"required"`
+		Bio          string `json:"bio"`
+		Email        string `json:"email" binding:"required,email"`
+		Password     string `json:"password" binding:"required,min=6"`
+		ProfileImage string `json:"profile_image"`
+		Location     string `json:"location"`
+		Website      string `json:"website"`
 	}
 
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input", "details": err.Error()})
 		return
 	}
 
-	author, err := queries.CreateUser(ctx, db.CreateUserParams{
-		Name: req.Name,
-		Bio:  req.Bio,
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password", "details": err.Error()})
+		return
+	}
+
+	user, err := queries.CreateUser(ctx, db.CreateUserParams{
+		Name:         req.Name,
+		Bio:          req.Bio,
+		Email:        req.Email,
+		Password:     string(hashedPassword),
+		ProfileImage: req.ProfileImage,
+		Location:     req.Location,
+		Website:      req.Website,
 	})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create author"})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user", "details": err.Error()})
 		return
 	}
 
-	ctx.JSON(http.StatusOK, author)
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": "Signup successful",
+		"user":    user,
+	})
 }
 
 func Login(ctx *gin.Context) {
 	var user User
 
 	if err := ctx.ShouldBindJSON(&user); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid input", "message": err.Error()})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input", "message": err.Error()})
 		return
 	}
 
-	if err := user.Validate(ctx); err != nil {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+	queries := ctx.MustGet("queries").(*db.Queries)
+	dbUser, err := queries.GetUserByEmail(ctx, user.Email)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"message": "Login successful"})
+	err = bcrypt.CompareHashAndPassword([]byte(dbUser.Password), []byte(user.Password))
+	if err != nil {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
+		return
+	}
+
+	token, err := Generatetoken(user.Email, dbUser.ID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": "Login successful",
+		"token":   token,
+	})
 }
 
 func Generatetoken(email string, userid int64) (string, error) {

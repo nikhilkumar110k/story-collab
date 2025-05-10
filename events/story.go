@@ -3,6 +3,7 @@ package events
 import (
 	"errors"
 	"net/http"
+	"strconv"
 	"time"
 
 	db "main/db/sqlc"
@@ -25,11 +26,11 @@ func GetQueries(c *gin.Context) (*db.Queries, error) {
 }
 
 type StoryRequest struct {
-	ID            string    `json:"id" binding:"required"`
+	ID            int64     `json:"id" binding:"required"`
 	Title         string    `json:"title" binding:"required"`
 	Description   string    `json:"description"`
 	CoverImage    string    `json:"cover_image"`
-	AuthorID      string    `json:"author_id" binding:"required"`
+	user_id       int64     `json:"user_id" binding:"required"`
 	Likes         int64     `json:"likes"`
 	Views         int64     `json:"views"`
 	PublishedDate time.Time `json:"published_date"`
@@ -57,7 +58,7 @@ func CreateStoryHandler(ctx *gin.Context) {
 		Title:         req.Title,
 		Description:   req.Description,
 		CoverImage:    req.CoverImage,
-		AuthorID:      req.AuthorID,
+		UserID:        req.user_id,
 		Likes:         req.Likes,
 		Views:         req.Views,
 		PublishedDate: req.PublishedDate,
@@ -78,7 +79,12 @@ func ListStoriesHandler(ctx *gin.Context) {
 }
 
 func GetStoryByIDHandler(ctx *gin.Context) {
-	id := ctx.Param("id")
+	idStr := ctx.Param("id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid story ID"})
+		return
+	}
 
 	queries, err := GetQueries(ctx)
 	if err != nil {
@@ -96,7 +102,12 @@ func GetStoryByIDHandler(ctx *gin.Context) {
 }
 
 func UpdateStoryHandler(ctx *gin.Context) {
-	id := ctx.Param("id")
+	idStr := ctx.Param("id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid story ID"})
+		return
+	}
 
 	var req StoryRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -115,7 +126,7 @@ func UpdateStoryHandler(ctx *gin.Context) {
 		Title:         req.Title,
 		Description:   req.Description,
 		CoverImage:    req.CoverImage,
-		AuthorID:      req.AuthorID,
+		UserID:        req.user_id,
 		Likes:         req.Likes,
 		Views:         req.Views,
 		PublishedDate: req.PublishedDate,
@@ -133,7 +144,12 @@ func UpdateStoryHandler(ctx *gin.Context) {
 }
 
 func DeleteStoryHandler(ctx *gin.Context) {
-	id := ctx.Param("id")
+	idStr := ctx.Param("id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid story ID"})
+		return
+	}
 
 	queries, err := GetQueries(ctx)
 	if err != nil {

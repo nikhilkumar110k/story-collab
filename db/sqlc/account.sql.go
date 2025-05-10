@@ -16,8 +16,8 @@ VALUES ($1, $2)
 `
 
 type AddCollaboratorParams struct {
-	StoryID string
-	UserID  string
+	StoryID int64
+	UserID  int64
 }
 
 func (q *Queries) AddCollaborator(ctx context.Context, arg AddCollaboratorParams) error {
@@ -32,8 +32,8 @@ RETURNING id, story_id, title, content, is_complete
 `
 
 type CreateChapterParams struct {
-	ID         string
-	StoryID    string
+	ID         int64
+	StoryID    int64
 	Title      string
 	Content    string
 	IsComplete bool
@@ -59,18 +59,23 @@ func (q *Queries) CreateChapter(ctx context.Context, arg CreateChapterParams) (C
 }
 
 const createStory = `-- name: CreateStory :one
-INSERT INTO stories (id, title, description, cover_image, author_id, likes, views, published_date,
-last_edited, story_type, status, genres)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-RETURNING id, title, description, cover_image, author_id, likes, views, published_date, last_edited, story_type, status, genres
+INSERT INTO stories (
+  id, title, description, cover_image, user_id, likes, views,
+  published_date, last_edited, story_type, status, genres
+)
+VALUES (
+  $1, $2, $3, $4, $5, $6, $7,
+  $8, $9, $10, $11, $12
+)
+RETURNING id, title, description, cover_image, user_id, likes, views, published_date, last_edited, story_type, status, genres
 `
 
 type CreateStoryParams struct {
-	ID            string
+	ID            int64
 	Title         string
 	Description   string
 	CoverImage    string
-	AuthorID      string
+	UserID        int64
 	Likes         int64
 	Views         int64
 	PublishedDate time.Time
@@ -86,7 +91,7 @@ func (q *Queries) CreateStory(ctx context.Context, arg CreateStoryParams) (Story
 		arg.Title,
 		arg.Description,
 		arg.CoverImage,
-		arg.AuthorID,
+		arg.UserID,
 		arg.Likes,
 		arg.Views,
 		arg.PublishedDate,
@@ -101,7 +106,7 @@ func (q *Queries) CreateStory(ctx context.Context, arg CreateStoryParams) (Story
 		&i.Title,
 		&i.Description,
 		&i.CoverImage,
-		&i.AuthorID,
+		&i.UserID,
 		&i.Likes,
 		&i.Views,
 		&i.PublishedDate,
@@ -114,13 +119,16 @@ func (q *Queries) CreateStory(ctx context.Context, arg CreateStoryParams) (Story
 }
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO users (id, name, bio, profile_image, location, website, followers, following, stories_count, is_verified)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-RETURNING id, name, bio, profile_image, location, website, followers, following, stories_count, is_verified
+INSERT INTO users (
+  name, bio, profile_image, location, website,
+  followers, following, email, stories_count, is_verified, password
+) VALUES (
+  $1, $2, $3, $4, $5,
+  $6, $7, $8, $9, $10, $11
+) RETURNING id, name, bio, profile_image, location, website, followers, following, email, stories_count, is_verified, password
 `
 
 type CreateUserParams struct {
-	ID           string
 	Name         string
 	Bio          string
 	ProfileImage string
@@ -128,13 +136,14 @@ type CreateUserParams struct {
 	Website      string
 	Followers    int64
 	Following    int64
+	Email        string
 	StoriesCount int64
 	IsVerified   bool
+	Password     string
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
 	row := q.db.QueryRow(ctx, createUser,
-		arg.ID,
 		arg.Name,
 		arg.Bio,
 		arg.ProfileImage,
@@ -142,8 +151,10 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		arg.Website,
 		arg.Followers,
 		arg.Following,
+		arg.Email,
 		arg.StoriesCount,
 		arg.IsVerified,
+		arg.Password,
 	)
 	var i User
 	err := row.Scan(
@@ -155,8 +166,10 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.Website,
 		&i.Followers,
 		&i.Following,
+		&i.Email,
 		&i.StoriesCount,
 		&i.IsVerified,
+		&i.Password,
 	)
 	return i, err
 }
@@ -165,7 +178,7 @@ const deleteChapter = `-- name: DeleteChapter :exec
 DELETE FROM chapters WHERE id = $1
 `
 
-func (q *Queries) DeleteChapter(ctx context.Context, id string) error {
+func (q *Queries) DeleteChapter(ctx context.Context, id int64) error {
 	_, err := q.db.Exec(ctx, deleteChapter, id)
 	return err
 }
@@ -174,7 +187,7 @@ const deleteStory = `-- name: DeleteStory :exec
 DELETE FROM stories WHERE id = $1
 `
 
-func (q *Queries) DeleteStory(ctx context.Context, id string) error {
+func (q *Queries) DeleteStory(ctx context.Context, id int64) error {
 	_, err := q.db.Exec(ctx, deleteStory, id)
 	return err
 }
@@ -183,7 +196,7 @@ const deleteUser = `-- name: DeleteUser :exec
 DELETE FROM users WHERE id = $1
 `
 
-func (q *Queries) DeleteUser(ctx context.Context, id string) error {
+func (q *Queries) DeleteUser(ctx context.Context, id int64) error {
 	_, err := q.db.Exec(ctx, deleteUser, id)
 	return err
 }
@@ -192,7 +205,7 @@ const getChapterByID = `-- name: GetChapterByID :one
 SELECT id, story_id, title, content, is_complete FROM chapters WHERE id = $1
 `
 
-func (q *Queries) GetChapterByID(ctx context.Context, id string) (Chapter, error) {
+func (q *Queries) GetChapterByID(ctx context.Context, id int64) (Chapter, error) {
 	row := q.db.QueryRow(ctx, getChapterByID, id)
 	var i Chapter
 	err := row.Scan(
@@ -210,8 +223,8 @@ SELECT story_id, user_id FROM story_collaborators WHERE story_id = $1 AND user_i
 `
 
 type GetCollaboratorParams struct {
-	StoryID string
-	UserID  string
+	StoryID int64
+	UserID  int64
 }
 
 func (q *Queries) GetCollaborator(ctx context.Context, arg GetCollaboratorParams) (StoryCollaborator, error) {
@@ -221,11 +234,48 @@ func (q *Queries) GetCollaborator(ctx context.Context, arg GetCollaboratorParams
 	return i, err
 }
 
-const getStoryByID = `-- name: GetStoryByID :one
-SELECT id, title, description, cover_image, author_id, likes, views, published_date, last_edited, story_type, status, genres FROM stories WHERE id = $1
+const getStoriesByUser = `-- name: GetStoriesByUser :many
+SELECT id, title, description, cover_image, user_id, likes, views, published_date, last_edited, story_type, status, genres FROM stories WHERE user_id = $1
 `
 
-func (q *Queries) GetStoryByID(ctx context.Context, id string) (Story, error) {
+func (q *Queries) GetStoriesByUser(ctx context.Context, userID int64) ([]Story, error) {
+	rows, err := q.db.Query(ctx, getStoriesByUser, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Story
+	for rows.Next() {
+		var i Story
+		if err := rows.Scan(
+			&i.ID,
+			&i.Title,
+			&i.Description,
+			&i.CoverImage,
+			&i.UserID,
+			&i.Likes,
+			&i.Views,
+			&i.PublishedDate,
+			&i.LastEdited,
+			&i.StoryType,
+			&i.Status,
+			&i.Genres,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getStoryByID = `-- name: GetStoryByID :one
+SELECT id, title, description, cover_image, user_id, likes, views, published_date, last_edited, story_type, status, genres FROM stories WHERE id = $1
+`
+
+func (q *Queries) GetStoryByID(ctx context.Context, id int64) (Story, error) {
 	row := q.db.QueryRow(ctx, getStoryByID, id)
 	var i Story
 	err := row.Scan(
@@ -233,7 +283,7 @@ func (q *Queries) GetStoryByID(ctx context.Context, id string) (Story, error) {
 		&i.Title,
 		&i.Description,
 		&i.CoverImage,
-		&i.AuthorID,
+		&i.UserID,
 		&i.Likes,
 		&i.Views,
 		&i.PublishedDate,
@@ -245,11 +295,35 @@ func (q *Queries) GetStoryByID(ctx context.Context, id string) (Story, error) {
 	return i, err
 }
 
-const getUserByID = `-- name: GetUserByID :one
-SELECT id, name, bio, profile_image, location, website, followers, following, stories_count, is_verified FROM users WHERE id = $1
+const getUserByEmail = `-- name: GetUserByEmail :one
+SELECT id, name, bio, profile_image, location, website, followers, following, email, stories_count, is_verified, password FROM users WHERE email = $1
 `
 
-func (q *Queries) GetUserByID(ctx context.Context, id string) (User, error) {
+func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
+	row := q.db.QueryRow(ctx, getUserByEmail, email)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Bio,
+		&i.ProfileImage,
+		&i.Location,
+		&i.Website,
+		&i.Followers,
+		&i.Following,
+		&i.Email,
+		&i.StoriesCount,
+		&i.IsVerified,
+		&i.Password,
+	)
+	return i, err
+}
+
+const getUserByID = `-- name: GetUserByID :one
+SELECT id, name, bio, profile_image, location, website, followers, following, email, stories_count, is_verified, password FROM users WHERE id = $1
+`
+
+func (q *Queries) GetUserByID(ctx context.Context, id int64) (User, error) {
 	row := q.db.QueryRow(ctx, getUserByID, id)
 	var i User
 	err := row.Scan(
@@ -261,14 +335,16 @@ func (q *Queries) GetUserByID(ctx context.Context, id string) (User, error) {
 		&i.Website,
 		&i.Followers,
 		&i.Following,
+		&i.Email,
 		&i.StoriesCount,
 		&i.IsVerified,
+		&i.Password,
 	)
 	return i, err
 }
 
 const listStories = `-- name: ListStories :many
-SELECT id, title, description, cover_image, author_id, likes, views, published_date, last_edited, story_type, status, genres FROM stories
+SELECT id, title, description, cover_image, user_id, likes, views, published_date, last_edited, story_type, status, genres FROM stories
 `
 
 func (q *Queries) ListStories(ctx context.Context) ([]Story, error) {
@@ -285,7 +361,7 @@ func (q *Queries) ListStories(ctx context.Context) ([]Story, error) {
 			&i.Title,
 			&i.Description,
 			&i.CoverImage,
-			&i.AuthorID,
+			&i.UserID,
 			&i.Likes,
 			&i.Views,
 			&i.PublishedDate,
@@ -305,7 +381,7 @@ func (q *Queries) ListStories(ctx context.Context) ([]Story, error) {
 }
 
 const listUsers = `-- name: ListUsers :many
-SELECT id, name, bio, profile_image, location, website, followers, following, stories_count, is_verified FROM users
+SELECT id, name, bio, profile_image, location, website, followers, following, email, stories_count, is_verified, password FROM users
 `
 
 func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
@@ -326,8 +402,10 @@ func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
 			&i.Website,
 			&i.Followers,
 			&i.Following,
+			&i.Email,
 			&i.StoriesCount,
 			&i.IsVerified,
+			&i.Password,
 		); err != nil {
 			return nil, err
 		}
@@ -344,8 +422,8 @@ DELETE FROM story_collaborators WHERE story_id = $1 AND user_id = $2
 `
 
 type RemoveCollaboratorParams struct {
-	StoryID string
-	UserID  string
+	StoryID int64
+	UserID  int64
 }
 
 func (q *Queries) RemoveCollaborator(ctx context.Context, arg RemoveCollaboratorParams) error {
@@ -360,8 +438,8 @@ RETURNING id, story_id, title, content, is_complete
 `
 
 type UpdateChapterParams struct {
-	ID         string
-	StoryID    string
+	ID         int64
+	StoryID    int64
 	Title      string
 	Content    string
 	IsComplete bool
@@ -387,19 +465,28 @@ func (q *Queries) UpdateChapter(ctx context.Context, arg UpdateChapterParams) (C
 }
 
 const updateStory = `-- name: UpdateStory :one
-UPDATE stories SET title = $2, description = $3, cover_image = $4, author_id = $5,
-likes = $6, views = $7, published_date = $8, last_edited = $9,
-story_type = $10, status = $11, genres = $12
+UPDATE stories SET
+  title = $2,
+  description = $3,
+  cover_image = $4,
+  user_id = $5,
+  likes = $6,
+  views = $7,
+  published_date = $8,
+  last_edited = $9,
+  story_type = $10,
+  status = $11,
+  genres = $12
 WHERE id = $1
-RETURNING id, title, description, cover_image, author_id, likes, views, published_date, last_edited, story_type, status, genres
+RETURNING id, title, description, cover_image, user_id, likes, views, published_date, last_edited, story_type, status, genres
 `
 
 type UpdateStoryParams struct {
-	ID            string
+	ID            int64
 	Title         string
 	Description   string
 	CoverImage    string
-	AuthorID      string
+	UserID        int64
 	Likes         int64
 	Views         int64
 	PublishedDate time.Time
@@ -415,7 +502,7 @@ func (q *Queries) UpdateStory(ctx context.Context, arg UpdateStoryParams) (Story
 		arg.Title,
 		arg.Description,
 		arg.CoverImage,
-		arg.AuthorID,
+		arg.UserID,
 		arg.Likes,
 		arg.Views,
 		arg.PublishedDate,
@@ -430,7 +517,7 @@ func (q *Queries) UpdateStory(ctx context.Context, arg UpdateStoryParams) (Story
 		&i.Title,
 		&i.Description,
 		&i.CoverImage,
-		&i.AuthorID,
+		&i.UserID,
 		&i.Likes,
 		&i.Views,
 		&i.PublishedDate,
@@ -446,11 +533,11 @@ const updateUser = `-- name: UpdateUser :one
 UPDATE users SET name = $2, bio = $3, profile_image = $4, location = $5, website = $6,
 followers = $7, following = $8, stories_count = $9, is_verified = $10
 WHERE id = $1
-RETURNING id, name, bio, profile_image, location, website, followers, following, stories_count, is_verified
+RETURNING id, name, bio, profile_image, location, website, followers, following, email, stories_count, is_verified, password
 `
 
 type UpdateUserParams struct {
-	ID           string
+	ID           int64
 	Name         string
 	Bio          string
 	ProfileImage string
@@ -485,8 +572,10 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, e
 		&i.Website,
 		&i.Followers,
 		&i.Following,
+		&i.Email,
 		&i.StoriesCount,
 		&i.IsVerified,
+		&i.Password,
 	)
 	return i, err
 }
