@@ -4,16 +4,22 @@ import (
 	"context"
 	"log"
 
+	db "main/db/sqlc"
+	"main/utils"
+
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
-
-	db "main/db/sqlc"
-	storiesdb "main/storydb/sqlcstory"
-	"main/utils"
 )
 
+func InjectQueries(queries *db.Queries) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Set("queries", queries)
+		c.Next()
+	}
+}
+
 func main() {
-	mainDBURL := "postgresql://root:Nikhil@123k@localhost:5432/project3postgresql1?sslmode=disable"
+	mainDBURL := "postgresql://root:Nikhil%40123k@18.232.150.66:5432/project3postgresql1?sslmode=disable"
 	mainConn, err := pgxpool.New(context.Background(), mainDBURL)
 	if err != nil {
 		log.Fatal("Cannot connect to main database:", err)
@@ -21,19 +27,12 @@ func main() {
 	defer mainConn.Close()
 	mainQueries := db.New(mainConn)
 
-	storiesDBURL := "postgresql://root:Nikhil@123k@localhost:5432/project3postgresql1?sslmode=disable"
-	storiesConn, err := pgxpool.New(context.Background(), storiesDBURL)
-	if err != nil {
-		log.Fatal("Cannot connect to stories database:", err)
-	}
-	defer storiesConn.Close()
-	storiesQueries := storiesdb.New(storiesConn)
-
 	router := gin.Default()
+
+	router.Use(InjectQueries(mainQueries))
 
 	router.Use(func(ctx *gin.Context) {
 		ctx.Set("queries", mainQueries)
-		ctx.Set("queries1", storiesQueries)
 		ctx.Next()
 	})
 

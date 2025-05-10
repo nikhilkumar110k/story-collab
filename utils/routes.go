@@ -7,6 +7,7 @@ import (
 	db "main/db/sqlc"
 	"main/events"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -16,12 +17,19 @@ import (
 func RegisterRoutes(server *gin.Engine) {
 	authenticated := server.Group("/")
 	authenticated.Use(Authenticate)
-	server.GET("/GetAuthors", events.GetAuthors)
-	server.POST("/createauthor", events.CreateAuthors)
-	server.POST("/deleteauthor", events.DeleteAuthors)
-	server.POST("/createstories", events.CreateStory)
+	server.GET("/GetAuthors", events.GetAllUsersHandler)
+	server.POST("/createauthor", events.CreateUserHandler)
+	server.GET("/GetAuthor/:id", events.GetUserByIDHandler)
+	server.POST("/deleteauthor/:id", events.DeleteUserHandler)
+
 	server.POST("/signup", SignUp)
-	authenticated.POST("/login", Login)
+	server.POST("/login", Login)
+
+	server.POST("/createstories", events.CreateStoryHandler)
+	server.GET("/GetStories/:id", events.GetStoryByIDHandler)
+	server.GET("/GetAllStories", events.ListStoriesHandler)
+	server.POST("/deleteStory", events.DeleteStoryHandler)
+	server.POST("/updateStory", events.UpdateStoryHandler)
 }
 
 const Secretkey = "totallsecretkeylol1"
@@ -40,7 +48,7 @@ func (u *User) Validate(ctx *gin.Context) error {
 		return errors.New("database connection not found")
 	}
 
-	user, err := queries.GetAuthorsByEmail(context.Background(), u.Email)
+	user, err := queries.GetUserByID(context.Background(), u.Email)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return errors.New("email not found")
@@ -48,7 +56,11 @@ func (u *User) Validate(ctx *gin.Context) error {
 		return err
 	}
 
-	u.ID = user.ID
+	id, err := strconv.ParseInt(user.ID, 10, 64)
+	if err != nil {
+		return errors.New("invalid user ID format")
+	}
+	u.ID = id
 	return nil
 }
 
@@ -67,11 +79,9 @@ func SignUp(ctx *gin.Context) {
 		return
 	}
 
-	author, err := queries.CreateAuthor(ctx, db.CreateAuthorParams{
-		Name:     req.Name,
-		Bio:      req.Bio,
-		Email:    req.Email,
-		Password: req.Password, // Store hashed password, not plaintext
+	author, err := queries.CreateUser(ctx, db.CreateUserParams{
+		Name: req.Name,
+		Bio:  req.Bio,
 	})
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create author"})

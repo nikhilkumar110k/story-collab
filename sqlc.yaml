@@ -9,11 +9,3 @@ sql:
         out: "db/sqlc"
         sql_package: "pgx/v5"
         
-  - engine: "postgresql"
-    queries: "storydb/querystories/story.sql"
-    schema: "storydb/schemastories/schemastories.sql"
-    gen:
-      go:
-        package: "storydb"
-        out: "storydb/sqlcstory"
-        sql_package: "pgx/v5"

@@ -1,39 +1,71 @@
--- name: GetAuthor :one
-SELECT id, name, bio, email, password FROM authors
-WHERE id = $1 LIMIT 1;
+-- name: CreateUser :one
+INSERT INTO users (id, name, bio, profile_image, location, website, followers, following, stories_count, is_verified)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+RETURNING *;
 
--- name: ListAuthors :many
-SELECT id, name, bio, email, password FROM authors
-ORDER BY name;
+-- name: GetUserByID :one
+SELECT * FROM users WHERE id = $1;
 
--- name: GetAuthorsByEmail :one
-SELECT id, password FROM authors
-WHERE email = $1
-LIMIT 1;
+-- name: UpdateUser :one
+UPDATE users SET name = $2, bio = $3, profile_image = $4, location = $5, website = $6,
+followers = $7, following = $8, stories_count = $9, is_verified = $10
+WHERE id = $1
+RETURNING *;
 
--- name: CreateAuthor :one
-INSERT INTO authors (
-  name, bio, email, password
-) VALUES (
-  $1, $2, $3, $4
-)
-RETURNING id, name, bio, email, password;
+-- name: DeleteUser :exec
+DELETE FROM users WHERE id = $1;
 
--- name: UpdateAuthor :exec
-UPDATE authors
-SET name = $2,
-    bio = $3,
-    email = $4,
-    password = $5
-WHERE id = $1;
+-- name: ListUsers :many
+SELECT * FROM users;
 
--- name: DeleteAuthor :exec
-DELETE FROM authors
-WHERE id = $1;
+-- name: ListStories :many
+SELECT * FROM stories;
 
--- Ensure required columns exist
-SELECT column_name FROM information_schema.columns WHERE table_name = 'authors';
+-- name: CreateStory :one
+INSERT INTO stories (id, title, description, cover_image, author_id, likes, views, published_date,
+last_edited, story_type, status, genres)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+RETURNING *;
 
--- Add missing columns if necessary
-ALTER TABLE authors ADD COLUMN IF NOT EXISTS email TEXT UNIQUE NOT NULL;
-ALTER TABLE authors ADD COLUMN IF NOT EXISTS password TEXT NOT NULL;
+-- name: GetStoryByID :one
+SELECT * FROM stories WHERE id = $1;
+
+-- name: UpdateStory :one
+UPDATE stories SET title = $2, description = $3, cover_image = $4, author_id = $5,
+likes = $6, views = $7, published_date = $8, last_edited = $9,
+story_type = $10, status = $11, genres = $12
+WHERE id = $1
+RETURNING *;
+
+-- name: DeleteStory :exec
+DELETE FROM stories WHERE id = $1;
+
+
+-- name: CreateChapter :one
+INSERT INTO chapters (id, story_id, title, content, is_complete)
+VALUES ($1, $2, $3, $4, $5)
+RETURNING *;
+
+-- name: GetChapterByID :one
+SELECT * FROM chapters WHERE id = $1;
+
+-- name: UpdateChapter :one
+UPDATE chapters SET story_id = $2, title = $3, content = $4, is_complete = $5
+WHERE id = $1
+RETURNING *;
+
+-- name: DeleteChapter :exec
+DELETE FROM chapters WHERE id = $1;
+
+
+
+
+-- name: AddCollaborator :exec
+INSERT INTO story_collaborators (story_id, user_id)
+VALUES ($1, $2);
+
+-- name: GetCollaborator :one
+SELECT * FROM story_collaborators WHERE story_id = $1 AND user_id = $2;
+
+-- name: RemoveCollaborator :exec
+DELETE FROM story_collaborators WHERE story_id = $1 AND user_id = $2;
