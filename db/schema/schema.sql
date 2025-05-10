@@ -45,12 +45,20 @@ CREATE TABLE stories (
 
 -- Create chapters table
 CREATE TABLE chapters (
-  id SERIAL PRIMARY KEY,
-  story_id INTEGER NOT NULL,
-  title VARCHAR NOT NULL,
-  content TEXT NOT NULL,
-  is_complete BOOLEAN NOT NULL DEFAULT false
+    id SERIAL PRIMARY KEY,
+    story_id INT NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    content TEXT,
+    chapter_number INT NOT NULL,
+    is_complete BOOLEAN NOT NULL,
+    createdat TIMESTAMP DEFAULT NOW(),
+    updatedat TIMESTAMP DEFAULT NOW(),
+    FOREIGN KEY (story_id) REFERENCES stories(id),
+    CONSTRAINT unique_chapter_number_per_story UNIQUE (story_id, chapter_number)
 );
+
+
+
 
 -- Create story_collaborators table
 CREATE TABLE story_collaborators (

@@ -26,26 +26,30 @@ func (q *Queries) AddCollaborator(ctx context.Context, arg AddCollaboratorParams
 }
 
 const createChapter = `-- name: CreateChapter :one
-INSERT INTO chapters (id, story_id, title, content, is_complete)
-VALUES ($1, $2, $3, $4, $5)
-RETURNING id, story_id, title, content, is_complete
+INSERT INTO chapters (story_id, title, content, chapter_number, is_complete, createdat, updatedat)
+VALUES ($1, $2, $3, $4, $5, COALESCE($6, now()), COALESCE($7, now()))
+RETURNING id, story_id, title, content, chapter_number, is_complete, createdat, updatedat
 `
 
 type CreateChapterParams struct {
-	ID         int64
-	StoryID    int64
-	Title      string
-	Content    string
-	IsComplete bool
+	StoryID       int64
+	Title         string
+	Content       string
+	ChapterNumber int64
+	IsComplete    bool
+	Column6       interface{}
+	Column7       interface{}
 }
 
 func (q *Queries) CreateChapter(ctx context.Context, arg CreateChapterParams) (Chapter, error) {
 	row := q.db.QueryRow(ctx, createChapter,
-		arg.ID,
 		arg.StoryID,
 		arg.Title,
 		arg.Content,
+		arg.ChapterNumber,
 		arg.IsComplete,
+		arg.Column6,
+		arg.Column7,
 	)
 	var i Chapter
 	err := row.Scan(
@@ -53,7 +57,10 @@ func (q *Queries) CreateChapter(ctx context.Context, arg CreateChapterParams) (C
 		&i.StoryID,
 		&i.Title,
 		&i.Content,
+		&i.ChapterNumber,
 		&i.IsComplete,
+		&i.Createdat,
+		&i.Updatedat,
 	)
 	return i, err
 }
@@ -174,13 +181,16 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 	return i, err
 }
 
-const deleteChapter = `-- name: DeleteChapter :exec
-DELETE FROM chapters WHERE id = $1
+const deleteChapter = `-- name: DeleteChapter :one
+DELETE FROM chapters
+WHERE id = $1
+RETURNING id
 `
 
-func (q *Queries) DeleteChapter(ctx context.Context, id int64) error {
-	_, err := q.db.Exec(ctx, deleteChapter, id)
-	return err
+func (q *Queries) DeleteChapter(ctx context.Context, id int64) (int64, error) {
+	row := q.db.QueryRow(ctx, deleteChapter, id)
+	err := row.Scan(&id)
+	return id, err
 }
 
 const deleteStory = `-- name: DeleteStory :exec
@@ -202,7 +212,9 @@ func (q *Queries) DeleteUser(ctx context.Context, id int64) error {
 }
 
 const getChapterByID = `-- name: GetChapterByID :one
-SELECT id, story_id, title, content, is_complete FROM chapters WHERE id = $1
+SELECT id, story_id, title, content, chapter_number, is_complete, createdat, updatedat
+FROM chapters
+WHERE id = $1
 `
 
 func (q *Queries) GetChapterByID(ctx context.Context, id int64) (Chapter, error) {
@@ -213,7 +225,10 @@ func (q *Queries) GetChapterByID(ctx context.Context, id int64) (Chapter, error)
 		&i.StoryID,
 		&i.Title,
 		&i.Content,
+		&i.ChapterNumber,
 		&i.IsComplete,
+		&i.Createdat,
+		&i.Updatedat,
 	)
 	return i, err
 }
@@ -343,12 +358,141 @@ func (q *Queries) GetUserByID(ctx context.Context, id int64) (User, error) {
 	return i, err
 }
 
+const listChaptersByStory = `-- name: ListChaptersByStory :many
+SELECT id, story_id, title, content, chapter_number, is_complete, createdat, updatedat
+FROM chapters
+WHERE story_id = $1
+ORDER BY chapter_number
+`
+
+func (q *Queries) ListChaptersByStory(ctx context.Context, storyID int64) ([]Chapter, error) {
+	rows, err := q.db.Query(ctx, listChaptersByStory, storyID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Chapter
+	for rows.Next() {
+		var i Chapter
+		if err := rows.Scan(
+			&i.ID,
+			&i.StoryID,
+			&i.Title,
+			&i.Content,
+			&i.ChapterNumber,
+			&i.IsComplete,
+			&i.Createdat,
+			&i.Updatedat,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listStories = `-- name: ListStories :many
 SELECT id, title, description, cover_image, user_id, likes, views, published_date, last_edited, story_type, status, genres FROM stories
 `
 
 func (q *Queries) ListStories(ctx context.Context) ([]Story, error) {
 	rows, err := q.db.Query(ctx, listStories)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Story
+	for rows.Next() {
+		var i Story
+		if err := rows.Scan(
+			&i.ID,
+			&i.Title,
+			&i.Description,
+			&i.CoverImage,
+			&i.UserID,
+			&i.Likes,
+			&i.Views,
+			&i.PublishedDate,
+			&i.LastEdited,
+			&i.StoryType,
+			&i.Status,
+			&i.Genres,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listStoriesByUser = `-- name: ListStoriesByUser :many
+SELECT id, title, description, cover_image, user_id, likes, views, published_date, last_edited, story_type, status, genres FROM stories
+WHERE user_id = $1
+`
+
+func (q *Queries) ListStoriesByUser(ctx context.Context, userID int64) ([]Story, error) {
+	rows, err := q.db.Query(ctx, listStoriesByUser, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Story
+	for rows.Next() {
+		var i Story
+		if err := rows.Scan(
+			&i.ID,
+			&i.Title,
+			&i.Description,
+			&i.CoverImage,
+			&i.UserID,
+			&i.Likes,
+			&i.Views,
+			&i.PublishedDate,
+			&i.LastEdited,
+			&i.StoryType,
+			&i.Status,
+			&i.Genres,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listStoriesByUserID = `-- name: ListStoriesByUserID :many
+SELECT 
+  id,
+  title,
+  description,
+  cover_image,
+  user_id,
+  likes,
+  views,
+  published_date,
+  last_edited,
+  story_type,
+  status,
+  genres
+FROM 
+  stories
+WHERE 
+  user_id = $1
+ORDER BY 
+  published_date DESC NULLS LAST, last_edited DESC
+`
+
+func (q *Queries) ListStoriesByUserID(ctx context.Context, userID int64) ([]Story, error) {
+	rows, err := q.db.Query(ctx, listStoriesByUserID, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -432,25 +576,30 @@ func (q *Queries) RemoveCollaborator(ctx context.Context, arg RemoveCollaborator
 }
 
 const updateChapter = `-- name: UpdateChapter :one
-UPDATE chapters SET story_id = $2, title = $3, content = $4, is_complete = $5
+UPDATE chapters
+SET title = COALESCE($2, title),
+    content = COALESCE($3, content),
+    chapter_number = COALESCE($4, chapter_number),
+    is_complete = COALESCE($5, is_complete),
+    updatedat = now()
 WHERE id = $1
-RETURNING id, story_id, title, content, is_complete
+RETURNING id, story_id, title, content, chapter_number, is_complete, createdat, updatedat
 `
 
 type UpdateChapterParams struct {
-	ID         int64
-	StoryID    int64
-	Title      string
-	Content    string
-	IsComplete bool
+	ID            int64
+	Title         string
+	Content       string
+	ChapterNumber int64
+	IsComplete    bool
 }
 
 func (q *Queries) UpdateChapter(ctx context.Context, arg UpdateChapterParams) (Chapter, error) {
 	row := q.db.QueryRow(ctx, updateChapter,
 		arg.ID,
-		arg.StoryID,
 		arg.Title,
 		arg.Content,
+		arg.ChapterNumber,
 		arg.IsComplete,
 	)
 	var i Chapter
@@ -459,7 +608,10 @@ func (q *Queries) UpdateChapter(ctx context.Context, arg UpdateChapterParams) (C
 		&i.StoryID,
 		&i.Title,
 		&i.Content,
+		&i.ChapterNumber,
 		&i.IsComplete,
+		&i.Createdat,
+		&i.Updatedat,
 	)
 	return i, err
 }

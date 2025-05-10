@@ -54,11 +54,14 @@ func (ns NullStoryStatus) Value() (driver.Value, error) {
 }
 
 type Chapter struct {
-	ID         int64
-	StoryID    int64
-	Title      string
-	Content    string
-	IsComplete bool
+	ID            int64
+	StoryID       int64
+	Title         string
+	Content       string
+	ChapterNumber int64
+	IsComplete    bool
+	Createdat     time.Time
+	Updatedat     time.Time
 }
 
 type Story struct {

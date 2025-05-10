@@ -11,6 +11,29 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+func ListStoriesByUserHandler(ctx *gin.Context) {
+	userIDStr := ctx.Param("user_id")
+	userID, err := strconv.ParseInt(userIDStr, 10, 64)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		return
+	}
+
+	queries, err := GetQueries(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	stories, err := queries.ListStoriesByUserID(ctx, userID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch stories"})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, stories)
+}
+
 func GetQueries(c *gin.Context) (*db.Queries, error) {
 	val, exists := c.Get("queries")
 	if !exists {

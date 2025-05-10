@@ -68,22 +68,54 @@ SELECT * FROM stories WHERE user_id = $1;
 
 
 -- name: CreateChapter :one
-INSERT INTO chapters (id, story_id, title, content, is_complete)
-VALUES ($1, $2, $3, $4, $5)
+INSERT INTO chapters (story_id, title, content, chapter_number, is_complete, createdat, updatedat)
+VALUES ($1, $2, $3, $4, $5, COALESCE($6, now()), COALESCE($7, now()))
 RETURNING *;
+
 
 -- name: GetChapterByID :one
-SELECT * FROM chapters WHERE id = $1;
+SELECT id, story_id, title, content, chapter_number, is_complete, createdat, updatedat
+FROM chapters
+WHERE id = $1;
+
 
 -- name: UpdateChapter :one
-UPDATE chapters SET story_id = $2, title = $3, content = $4, is_complete = $5
+UPDATE chapters
+SET title = COALESCE($2, title),
+    content = COALESCE($3, content),
+    chapter_number = COALESCE($4, chapter_number),
+    is_complete = COALESCE($5, is_complete),
+    updatedat = now()
 WHERE id = $1
-RETURNING *;
+RETURNING id, story_id, title, content, chapter_number, is_complete, createdat, updatedat;
 
--- name: DeleteChapter :exec
-DELETE FROM chapters WHERE id = $1;
+-- name: DeleteChapter :one
+DELETE FROM chapters
+WHERE id = $1
+RETURNING id;
 
 
+-- name: ListStoriesByUserID :many
+SELECT 
+  id,
+  title,
+  description,
+  cover_image,
+  user_id,
+  likes,
+  views,
+  published_date,
+  last_edited,
+  story_type,
+  status,
+  genres
+FROM 
+  stories
+WHERE 
+  user_id = $1
+ORDER BY 
+  published_date DESC NULLS LAST, last_edited DESC;
+  
 
 -- name: AddCollaborator :exec
 INSERT INTO story_collaborators (story_id, user_id)
@@ -94,3 +126,14 @@ SELECT * FROM story_collaborators WHERE story_id = $1 AND user_id = $2;
 
 -- name: RemoveCollaborator :exec
 DELETE FROM story_collaborators WHERE story_id = $1 AND user_id = $2;
+
+-- name: ListChaptersByStory :many
+SELECT id, story_id, title, content, chapter_number, is_complete, createdat, updatedat
+FROM chapters
+WHERE story_id = $1
+ORDER BY chapter_number;
+
+
+-- name: ListStoriesByUser :many
+SELECT * FROM stories
+WHERE user_id = $1;

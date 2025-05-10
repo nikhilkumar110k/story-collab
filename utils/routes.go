@@ -22,6 +22,7 @@ func RegisterRoutes(server *gin.Engine) {
 	server.POST("/createauthor", events.CreateUserHandler)
 	server.GET("/GetAuthor/:id", events.GetUserByIDHandler)
 	server.DELETE("/deleteauthor/:id", events.DeleteUserHandler)
+	server.PATCH("/updateauthor/:id", events.UpdateUserHandler)
 
 	server.POST("/signup", SignUp)
 	server.POST("/login", Login)
@@ -31,6 +32,14 @@ func RegisterRoutes(server *gin.Engine) {
 	server.GET("/GetAllStories", events.ListStoriesHandler)
 	server.DELETE("/deleteStory/:id", events.DeleteStoryHandler)
 	server.PATCH("/updateStory/:id", events.UpdateStoryHandler)
+	server.GET("/GetStoriesByUser/:user_id", events.ListStoriesByUserHandler)
+
+	server.POST("/createchapter", events.CreateChapterHandler)
+	server.GET("/getchapterbyid/:id", events.GetChapterByIDHandler)
+	server.GET("/getchapterbystory/:story_id", events.ListChaptersByStoryHandler)
+	server.PATCH("/updatechapter/:id", events.UpdateChapterHandler)
+	server.DELETE("/deletechapter/:id", events.DeleteChapterHandler)
+
 }
 
 const Secretkey = "totallsecretkeylol1"
