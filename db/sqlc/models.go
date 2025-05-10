@@ -7,8 +7,8 @@ package db
 import (
 	"database/sql/driver"
 	"fmt"
-	"time"
-)
+
+	"time")
 
 type StoryStatus string
 

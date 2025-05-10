@@ -20,7 +20,7 @@ func RegisterRoutes(server *gin.Engine) {
 	server.GET("/GetAuthors", events.GetAllUsersHandler)
 	server.POST("/createauthor", events.CreateUserHandler)
 	server.GET("/GetAuthor/:id", events.GetUserByIDHandler)
-	server.POST("/deleteauthor/:id", events.DeleteUserHandler)
+	server.DELETE("/deleteauthor/:id", events.DeleteUserHandler)
 
 	server.POST("/signup", SignUp)
 	server.POST("/login", Login)

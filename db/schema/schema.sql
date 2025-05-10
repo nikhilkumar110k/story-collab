@@ -54,3 +54,11 @@ ALTER TABLE "chapters" ADD FOREIGN KEY ("story_id") REFERENCES "stories" ("id") 
 ALTER TABLE "story_collaborators" ADD FOREIGN KEY ("story_id") REFERENCES "stories" ("id") ON DELETE CASCADE;
 
 ALTER TABLE "story_collaborators" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id");
+-- Step 1: Drop the existing foreign key constraint
+ALTER TABLE story_collaborators
+DROP CONSTRAINT IF EXISTS story_collaborators_user_id_fkey;
+
+-- Step 2: Re-add the foreign key with ON DELETE CASCADE
+ALTER TABLE story_collaborators
+ADD CONSTRAINT story_collaborators_user_id_fkey
+FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
