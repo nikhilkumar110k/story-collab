@@ -29,8 +29,8 @@ func RegisterRoutes(server *gin.Engine) {
 	server.POST("/createstories", events.CreateStoryHandler)
 	server.GET("/GetStories/:id", events.GetStoryByIDHandler)
 	server.GET("/GetAllStories", events.ListStoriesHandler)
-	server.POST("/deleteStory", events.DeleteStoryHandler)
-	server.POST("/updateStory", events.UpdateStoryHandler)
+	server.DELETE("/deleteStory/:id", events.DeleteStoryHandler)
+	server.PATCH("/updateStory/:id", events.UpdateStoryHandler)
 }
 
 const Secretkey = "totallsecretkeylol1"

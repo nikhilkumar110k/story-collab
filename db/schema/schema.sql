@@ -26,7 +26,7 @@ ALTER TABLE users ADD COLUMN password TEXT NOT NULL;
 -- Alter the users table to make 'id' auto-incrementing
 ALTER TABLE users
     ALTER COLUMN id SET DEFAULT nextval('users_id_seq'::regclass);
-    
+
 -- Create stories table with user_id instead of author_id
 CREATE TABLE stories (
   id INTEGER PRIMARY KEY,
@@ -45,7 +45,7 @@ CREATE TABLE stories (
 
 -- Create chapters table
 CREATE TABLE chapters (
-  id INTEGER PRIMARY KEY,
+  id SERIAL PRIMARY KEY,
   story_id INTEGER NOT NULL,
   title VARCHAR NOT NULL,
   content TEXT NOT NULL,

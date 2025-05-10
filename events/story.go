@@ -30,7 +30,7 @@ type StoryRequest struct {
 	Title         string    `json:"title" binding:"required"`
 	Description   string    `json:"description"`
 	CoverImage    string    `json:"cover_image"`
-	user_id       int64     `json:"user_id" binding:"required"`
+	UserID        int64     `json:"user_id" binding:"required"`
 	Likes         int64     `json:"likes"`
 	Views         int64     `json:"views"`
 	PublishedDate time.Time `json:"published_date"`
@@ -43,7 +43,10 @@ type StoryRequest struct {
 func CreateStoryHandler(ctx *gin.Context) {
 	var req StoryRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error":   "Invalid input",
+			"details": err.Error(),
+		})
 		return
 	}
 
@@ -58,7 +61,7 @@ func CreateStoryHandler(ctx *gin.Context) {
 		Title:         req.Title,
 		Description:   req.Description,
 		CoverImage:    req.CoverImage,
-		UserID:        req.user_id,
+		UserID:        req.UserID,
 		Likes:         req.Likes,
 		Views:         req.Views,
 		PublishedDate: req.PublishedDate,
@@ -76,6 +79,19 @@ func CreateStoryHandler(ctx *gin.Context) {
 }
 
 func ListStoriesHandler(ctx *gin.Context) {
+	queries, err := GetQueries(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	stories, err := queries.ListStories(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch stories"})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, stories)
 }
 
 func GetStoryByIDHandler(ctx *gin.Context) {
@@ -126,7 +142,7 @@ func UpdateStoryHandler(ctx *gin.Context) {
 		Title:         req.Title,
 		Description:   req.Description,
 		CoverImage:    req.CoverImage,
-		UserID:        req.user_id,
+		UserID:        req.UserID,
 		Likes:         req.Likes,
 		Views:         req.Views,
 		PublishedDate: req.PublishedDate,
