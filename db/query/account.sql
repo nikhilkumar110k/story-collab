@@ -124,7 +124,7 @@ ORDER BY
   
 
 -- name: AddCollaborator :exec
-INSERT INTO story_collaborators (story_id, user_id)
+INSERT INTO story_collaborators(story_id, user_id)
 VALUES ($1, $2);
 
 -- name: GetCollaborator :one

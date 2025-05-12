@@ -11,8 +11,7 @@ import (
 
 type CollaboratorRequest struct {
 	StoryID int64  `json:"story_id" validate:"required"`
-	UserID  int64  `json:"user_id" validate:"required"`
-	Role    string `json:"role" validate:"required"`
+	Email   string `json:"email" validate:"required,email"`
 }
 
 func CreateCollaboratorHandler(ctx *gin.Context) {
@@ -28,9 +27,15 @@ func CreateCollaboratorHandler(ctx *gin.Context) {
 		return
 	}
 
+	user, err := queries.GetUserByEmail(ctx, req.Email)
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, gin.H{"error": "User not found with provided email"})
+		return
+	}
+
 	err = queries.AddCollaborator(ctx, db.AddCollaboratorParams{
 		StoryID: req.StoryID,
-		UserID:  req.UserID,
+		UserID:  user.ID,
 	})
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create collaborator", "details": err.Error()})

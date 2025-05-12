@@ -11,7 +11,7 @@ import (
 "time")
 
 const addCollaborator = `-- name: AddCollaborator :exec
-INSERT INTO story_collaborators (story_id, user_id)
+INSERT INTO story_collaborators(story_id, user_id)
 VALUES ($1, $2)
 `
 
