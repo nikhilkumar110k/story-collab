@@ -94,7 +94,7 @@ func CreateStoryHandler(ctx *gin.Context) {
 		Genres:        req.Genres,
 	})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create story"})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create story", "details": err.Error()})
 		return
 	}
 

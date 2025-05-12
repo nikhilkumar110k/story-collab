@@ -394,6 +394,59 @@ func (q *Queries) ListChaptersByStory(ctx context.Context, storyID int64) ([]Cha
 	return items, nil
 }
 
+const listCollaboratorsByStory = `-- name: ListCollaboratorsByStory :many
+SELECT u.id, u.name, u.bio, u.profile_image, u.location, u.website, u.followers, u.following, u.stories_count, u.is_verified, u.email
+FROM story_collaborators sc
+JOIN users u ON sc.user_id = u.id
+WHERE sc.story_id = $1
+`
+
+type ListCollaboratorsByStoryRow struct {
+	ID           int64
+	Name         string
+	Bio          string
+	ProfileImage string
+	Location     string
+	Website      string
+	Followers    int64
+	Following    int64
+	StoriesCount int64
+	IsVerified   bool
+	Email        string
+}
+
+func (q *Queries) ListCollaboratorsByStory(ctx context.Context, storyID int64) ([]ListCollaboratorsByStoryRow, error) {
+	rows, err := q.db.Query(ctx, listCollaboratorsByStory, storyID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListCollaboratorsByStoryRow
+	for rows.Next() {
+		var i ListCollaboratorsByStoryRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Bio,
+			&i.ProfileImage,
+			&i.Location,
+			&i.Website,
+			&i.Followers,
+			&i.Following,
+			&i.StoriesCount,
+			&i.IsVerified,
+			&i.Email,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listStories = `-- name: ListStories :many
 SELECT id, title, description, cover_image, user_id, likes, views, published_date, last_edited, story_type, status, genres FROM stories
 `

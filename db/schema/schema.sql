@@ -67,6 +67,13 @@ CREATE TABLE story_collaborators (
   PRIMARY KEY (story_id, user_id)
 );
 
+
+
+
+
+
+
+
 -- Foreign key constraints
 ALTER TABLE stories
   ADD CONSTRAINT stories_user_id_fkey

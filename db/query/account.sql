@@ -19,6 +19,12 @@ followers = $7, following = $8, stories_count = $9, is_verified = $10
 WHERE id = $1
 RETURNING *;
 
+-- name: ListCollaboratorsByStory :many
+SELECT u.id, u.name, u.bio, u.profile_image, u.location, u.website, u.followers, u.following, u.stories_count, u.is_verified, u.email
+FROM story_collaborators sc
+JOIN users u ON sc.user_id = u.id
+WHERE sc.story_id = $1;
+
 -- name: DeleteUser :exec
 DELETE FROM users WHERE id = $1;
 

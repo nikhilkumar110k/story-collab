@@ -24,6 +24,11 @@ func RegisterRoutes(server *gin.Engine) {
 	server.DELETE("/deleteauthor/:id", events.DeleteUserHandler)
 	server.PATCH("/updateauthor/:id", events.UpdateUserHandler)
 
+	server.GET("/GetCollaborators/:id", events.GetCollaboratorByIDHandler)
+	server.POST("/createcollaborator", events.CreateCollaboratorHandler)
+	server.DELETE("/deletecollaborator", events.DeleteCollaboratorHandler)
+	server.GET("/GetCollaboratorByStory/:story_id", events.ListCollaboratorsByStoryHandler)
+
 	server.POST("/signup", SignUp)
 	server.POST("/login", Login)
 
