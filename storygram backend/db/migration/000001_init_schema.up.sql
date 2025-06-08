@@ -15,7 +15,6 @@ BEGIN
     END IF;
 END $$;
 
--- Step 3: Queries After Table Exists
 
 -- name: GetAuthor :one
 SELECT id, name, bio, email, password FROM authors
