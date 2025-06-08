@@ -7,7 +7,6 @@ CREATE TABLE IF NOT EXISTS authors (
     password TEXT NOT NULL
 );
 
--- Step 2: Ensure Table Exists Before Running Queries
 DO $$ 
 BEGIN
     IF NOT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'authors') THEN
