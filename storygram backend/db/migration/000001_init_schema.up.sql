@@ -51,6 +51,5 @@ WHERE id = $1;
 -- Step 4: Ensure Required Columns Exist
 SELECT column_name FROM information_schema.columns WHERE table_name = 'authors';
 
--- Step 5: Add Missing Columns if Necessary
 ALTER TABLE authors ADD COLUMN IF NOT EXISTS email TEXT UNIQUE NOT NULL;
 ALTER TABLE authors ADD COLUMN IF NOT EXISTS password TEXT NOT NULL;
